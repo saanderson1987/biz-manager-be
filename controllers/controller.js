@@ -10,7 +10,7 @@ module.exports = class Controller {
 
   index(req, res, next) {
     const attributes = this.formatAttributes(req.query.attributes);
-    const where = this.createWhereObject(req.query);
+    const where = this.createWhereOption(req.query);
     this.model
       .findAll({ attributes, where })
       .then((data) => res.send(this.formatFindAll(data)))
@@ -18,10 +18,15 @@ module.exports = class Controller {
   }
 
   getById(req, res, next) {
-    const attributes = this.formatAttributes(req.query.attributes);
+    const attributesString = req.query.attributes;
+    const { attributes, include } = this.createAttributesAndIncludeOptions(
+      attributesString
+    );
     this.model
-      .findOne({ attributes, where: { id: req.params.id } })
-      .then((data) => res.send(data))
+      .findOne({ attributes, include, where: { id: req.params.id } })
+      .then((data) =>
+        res.send(this.formatRecord(data, attributesString, include))
+      )
       .catch((err) => next(err));
   }
 
@@ -54,7 +59,89 @@ module.exports = class Controller {
       .catch((err) => next(err));
   }
 
-  createWhereObject(queryParams) {
+  createAttributesAndIncludeOptions(attributesString) {
+    const result = {};
+    if (attributesString) {
+      const { attributes, includeByAssociationTable } = attributesString
+        .split(",")
+        .reduce(
+          (acc, attribute) => {
+            if (this.model.tableAttributes[attribute]) {
+              acc.attributes.push(attribute);
+              return acc;
+            }
+
+            const [
+              associationTable,
+              associationTableAttribute,
+            ] = attribute.split("_");
+
+            if (
+              associationTable &&
+              associationTableAttribute &&
+              this.model.associations[associationTable].target.tableAttributes[
+                associationTableAttribute
+              ]
+            ) {
+              if (!acc.includeByAssociationTable[associationTable]) {
+                acc.includeByAssociationTable[associationTable] = {
+                  model: this.model.associations[associationTable].target, //associationTable,
+                  as: associationTable,
+                  attributes: [],
+                };
+              }
+              acc.includeByAssociationTable[associationTable].attributes.push(
+                associationTableAttribute
+              );
+              return acc;
+            }
+
+            throw new Error(`Attribute ${attribute} does not exist`);
+          },
+          { attributes: [], includeByAssociationTable: {} }
+        );
+
+      if (!attributes.includes("id")) {
+        attributes.push("id");
+      }
+
+      result.attributes = attributes;
+
+      const include = Object.values(includeByAssociationTable);
+      if (include.length > 0) {
+        result.include = include;
+      }
+    }
+    return result;
+  }
+
+  formatRecord(record, attributesString, include) {
+    if (include) {
+      return Object.keys(record.get({ plain: true })).reduce(
+        (acc, attribute) => {
+          if (
+            Object.getPrototypeOf(record[attribute].constructor).name ===
+            "Model"
+          ) {
+            for (const subAttr in record[attribute].get({ plain: true })) {
+              const joinTableAttribute = `${attribute}_${subAttr}`;
+              if (attributesString.includes(joinTableAttribute)) {
+                acc[joinTableAttribute] = record[attribute][subAttr];
+              }
+            }
+          } else {
+            acc[attribute] = record[attribute];
+          }
+
+          return acc;
+        },
+        {}
+      );
+    }
+    return record;
+  }
+
+  createWhereOption(queryParams) {
     const where = { ...queryParams };
     delete where.attributes;
     return where;

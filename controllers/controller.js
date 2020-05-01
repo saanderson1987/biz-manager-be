@@ -8,14 +8,24 @@ module.exports = class Controller {
     this.delete = this.delete.bind(this);
   }
 
+  formatAttributes(attributes) {
+    if (attributes) {
+      const formattedAttributes = attributes.split(",");
+      if (!formattedAttributes.includes("id")) {
+        formattedAttributes.push("id");
+      }
+      return formattedAttributes;
+    }
+  }
+
   index(req, res, next) {
-    const { attributes } = req.query;
+    const attributes = this.formatAttributes(req.query.attributes);
     const where = this.createWhereObject(req.query);
     this.send(this.model.findAll({ attributes, where }), res, next);
   }
 
   getById(req, res, next) {
-    const { attributes } = req.query;
+    const attributes = this.formatAttributes(req.query.attributes);
     this.send(
       this.model.findOne({ attributes, where: { id: req.params.id } }),
       res,

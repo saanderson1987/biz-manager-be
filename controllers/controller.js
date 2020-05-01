@@ -8,27 +8,28 @@ module.exports = class Controller {
     this.delete = this.delete.bind(this);
   }
 
-  index(req, res) {
+  index(req, res, next) {
     const { attributes } = req.query;
     const where = this.createWhereObject(req.query);
-    this.send(this.model.findAll({ attributes, where }), res);
+    this.send(this.model.findAll({ attributes, where }), res, next);
   }
 
-  getById(req, res) {
+  getById(req, res, next) {
     const { attributes } = req.query;
     this.send(
       this.model.findOne({ attributes, where: { id: req.params.id } }),
-      res
+      res,
+      next
     );
   }
 
-  create(req, res) {
+  create(req, res, next) {
     console.log(req.body);
     const record = req.body;
-    this.send(this.model.create(record), res);
+    this.send(this.model.create(record), res, next);
   }
 
-  update(req, res) {
+  update(req, res, next) {
     console.log(req.body);
     const record = req.body;
     this.send(
@@ -43,7 +44,8 @@ module.exports = class Controller {
               resolve(data[1] && data[1][0] ? data[1][0] : {})
             )
         ),
-      res
+      res,
+      next
     );
   }
 

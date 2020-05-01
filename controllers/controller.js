@@ -18,10 +18,25 @@ module.exports = class Controller {
     }
   }
 
+  formatReturnData(data) {
+    if (data instanceof Array) {
+      return data.reduce((acc, record) => {
+        if (record.id) {
+          acc[record.id] = record;
+        }
+        return acc;
+      }, {});
+    }
+    return data;
+  }
+
   index(req, res, next) {
     const attributes = this.formatAttributes(req.query.attributes);
     const where = this.createWhereObject(req.query);
-    this.send(this.model.findAll({ attributes, where }), res, next);
+    this.model
+      .findAll({ attributes, where })
+      .then((data) => res.send(this.formatReturnData(data)));
+    // this.send(this.model.findAll({ attributes, where }), res, next);
   }
 
   getById(req, res, next) {

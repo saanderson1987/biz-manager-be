@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
   );
   JobOrder.associate = function (models) {
     JobOrder.belongsTo(models.Job, { foreignKey: "jobId", as: "job" });
+    JobOrder.hasMany(models.Installation, {
+      foreignKey: "jobOrderId",
+      as: "installations",
+    });
   };
   return JobOrder;
 };

@@ -6,6 +6,11 @@ module.exports = (sequelize, DataTypes) => {
       name: DataTypes.STRING,
       poNum: DataTypes.STRING,
       companyId: DataTypes.INTEGER,
+      status: DataTypes.ENUM("inProgress", "onHold", "completed"),
+      budgetSentDate: DataTypes.DATE,
+      imageProposalSentDate: DataTypes.DATE,
+      artPlanSentDate: DataTypes.DATE,
+      receivableStatus: DataTypes.ENUM("PO sent", "50% paid", "100% paid"),
     },
     {}
   );

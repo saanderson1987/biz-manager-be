@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
   );
   Company.associate = function (models) {
     Company.hasMany(models.Job, { foreignKey: "companyId", as: "jobs" });
+    Company.hasMany(models.VendorOrder, {
+      foreignKey: "vendorId",
+      as: "vendorOrders",
+    });
   };
   return Company;
 };

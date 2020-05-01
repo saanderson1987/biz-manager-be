@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       parentId: DataTypes.INTEGER,
       parentTable: DataTypes.STRING,
       authorId: DataTypes.INTEGER,
+      contents: DataTypes.TEXT,
     },
     {}
   );

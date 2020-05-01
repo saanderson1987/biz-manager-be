@@ -2,6 +2,9 @@
 
 const fs = require("fs");
 const path = require("path");
+const { loadPGEnumFix } = require("../utils");
+
+loadPGEnumFix(); // Fixes a bug with enum data types while syncing the database.
 const Sequelize = require("sequelize");
 
 if (process.env.NODE_ENV !== "production") {

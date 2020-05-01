@@ -20,7 +20,7 @@ router.use("/installers", createStandardRouter(installerController));
 router.use("/jobs", createStandardRouter(jobController));
 router.use("/jobOrders", createStandardRouter(jobOrderController));
 router.use("/notes", createStandardRouter(noteController));
-router.use("/persons", createStandardRouter(personController));
+router.use("/people", createStandardRouter(personController));
 router.use("/vendorOrders", createStandardRouter(vendorOrderController));
 router.use(
   "/vendorOrderReplacements",

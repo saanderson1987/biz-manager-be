@@ -9,11 +9,17 @@ module.exports = class Controller {
   }
 
   index(req, res, next) {
-    const attributes = this.formatAttributes(req.query.attributes);
+    // const attributes = this.formatAttributes(req.query.attributes);
+    const attributesString = req.query.attributes;
+    const { attributes, include } = this.createAttributesAndIncludeOptions(
+      attributesString
+    );
     const where = this.createWhereOption(req.query);
     this.model
-      .findAll({ attributes, where })
-      .then((data) => res.send(this.formatFindAll(data)))
+      .findAll({ attributes, where, include })
+      .then((data) =>
+        res.send(this.formatFindAll(data, attributesString, include))
+      )
       .catch((err) => next(err));
   }
 
@@ -85,7 +91,7 @@ module.exports = class Controller {
             ) {
               if (!acc.includeByAssociationTable[associationTable]) {
                 acc.includeByAssociationTable[associationTable] = {
-                  model: this.model.associations[associationTable].target, //associationTable,
+                  model: this.model.associations[associationTable].target,
                   as: associationTable,
                   attributes: [],
                 };
@@ -157,11 +163,11 @@ module.exports = class Controller {
     }
   }
 
-  formatFindAll(data) {
+  formatFindAll(data, attributesString, include) {
     if (data instanceof Array) {
       return data.reduce((acc, record) => {
         if (record.id) {
-          acc[record.id] = record;
+          acc[record.id] = this.formatRecord(record, attributesString, include);
         }
         return acc;
       }, {});

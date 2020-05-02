@@ -9,7 +9,6 @@ module.exports = class Controller {
   }
 
   index(req, res, next) {
-    // const attributes = this.formatAttributes(req.query.attributes);
     const attributesString = req.query.attributes;
     const { attributes, include } = this.createAttributesAndIncludeOptions(
       attributesString
@@ -81,10 +80,10 @@ module.exports = class Controller {
               associationTable,
               associationTableAttribute,
             ] = attribute.split("_");
-
             if (
               associationTable &&
               associationTableAttribute &&
+              this.model.associations[associationTable] &&
               this.model.associations[associationTable].target.tableAttributes[
                 associationTableAttribute
               ]
@@ -151,16 +150,6 @@ module.exports = class Controller {
     const where = { ...queryParams };
     delete where.attributes;
     return where;
-  }
-
-  formatAttributes(attributes) {
-    if (attributes) {
-      const formattedAttributes = attributes.split(",");
-      if (!formattedAttributes.includes("id")) {
-        formattedAttributes.push("id");
-      }
-      return formattedAttributes;
-    }
   }
 
   formatFindAll(data, attributesString, include) {

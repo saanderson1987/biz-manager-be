@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       vendorOrderId: DataTypes.INTEGER,
       itemNumber: DataTypes.STRING,
-      complete: DataTypes.BOOLEAN,
+      completed: DataTypes.BOOLEAN,
     },
     {}
   );

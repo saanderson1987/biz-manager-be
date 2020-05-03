@@ -8,6 +8,7 @@ const {
   jobOrderController,
   noteController,
   personController,
+  userController,
   vendorOrderController,
   vendorOrderReplacementController,
 } = require("../controllers");
@@ -21,6 +22,7 @@ router.use("/jobs", createStandardRouter(jobController));
 router.use("/jobOrders", createStandardRouter(jobOrderController));
 router.use("/notes", createStandardRouter(noteController));
 router.use("/people", createStandardRouter(personController));
+router.use("/users", createStandardRouter(userController));
 router.use("/vendorOrders", createStandardRouter(vendorOrderController));
 router.use(
   "/vendorOrderReplacements",

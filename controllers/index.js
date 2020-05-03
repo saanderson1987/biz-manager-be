@@ -7,6 +7,7 @@ const {
   JobOrder,
   Note,
   Person,
+  User,
   VendorOrder,
   VendorOrderReplacement,
 } = require("../models");
@@ -19,6 +20,7 @@ module.exports = {
   jobOrderController: new Controller(JobOrder),
   noteController: new Controller(Note),
   personController: new Controller(Person),
+  userController: new Controller(User),
   vendorOrderController: new Controller(VendorOrder),
   vendorOrderReplacementController: new Controller(VendorOrderReplacement),
 };

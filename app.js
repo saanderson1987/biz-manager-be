@@ -45,90 +45,89 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use("/", routes);
+const { User } = require("./models");
 
-// const User = require("./models/user.js");
+passport.use(
+  new LocalStrategy(function (username, password, done) {
+    User.findOne({ where: { username } })
+      .then((user) => {
+        const isCorrectPassword = bcrypt.compareSync(
+          password,
+          (user && user.password) || ""
+        );
+        console.log(user.password);
+        if (isCorrectPassword) {
+          return done(null, user);
+        }
+        return done(null, false);
+      })
+      .catch((e) => done(e));
+  })
+);
+passport.serializeUser(function (user, done) {
+  done(null, user.id);
+});
+passport.deserializeUser(function (id, done) {
+  User.findOne({ where: { id } }).then(function (user) {
+    console.log(user);
+    done(null, user);
+  });
+});
 
-// passport.use(
-//   new LocalStrategy(function (username, password, done) {
-//     User.getByQuery({ username })
-//       .then(function (users) {
-//         const user = Object.values(users)[0];
-//         const isCorrectPassword = bcrypt.compareSync(
-//           password,
-//           (user && user.password) || ""
-//         );
-//         if (isCorrectPassword) {
-//           return done(null, user);
-//         }
-//         return done(null, false);
-//       })
-//       .catch((e) => done(e));
-//   })
-// );
-// passport.serializeUser(function (user, done) {
-//   done(null, user.id);
-// });
-// passport.deserializeUser(function (id, done) {
-//   User.getById(id).then(function (user) {
-//     done(null, user);
-//   });
-// });
+function getAuthenticationReturnObject({ isAuthenticated, user }) {
+  const object = { isAuthenticated };
+  if (user && user.id && user.username) {
+    object.user = {
+      id: user.id,
+      username: user.username,
+    };
+  }
+  return object;
+}
 
-// function getAuthenticationReturnObject({ isAuthenticated, user }) {
-//   const object = { isAuthenticated };
-//   if (user && user.id && user.username) {
-//     object.user = {
-//       id: user.id,
-//       username: user.username,
-//     };
-//   }
-//   return object;
-// }
+app.get("/isAuthenticated", (req, res) => {
+  const authenticationReturnObject = getAuthenticationReturnObject({
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user,
+  });
+  res.send(authenticationReturnObject);
+});
 
-// app.get("/isAuthenticated", (req, res) => {
-//   const authenticationReturnObject = getAuthenticationReturnObject({
-//     isAuthenticated: req.isAuthenticated(),
-//     user: req.user,
-//   });
-//   res.send(authenticationReturnObject);
-// });
+app.post("/login", function (req, res, next) {
+  passport.authenticate("local", function (err, user, info) {
+    if (err) {
+      return next(err);
+    }
+    req.logIn(user, function (err) {
+      if (err) {
+        console.log(err);
+        const loginError = new Error("Error logging in");
+        loginError.status = 401;
+        return next(loginError);
+      }
+      const authenticationReturnObject = getAuthenticationReturnObject({
+        isAuthenticated: true,
+        user,
+      });
+      return res.send(authenticationReturnObject);
+    });
+  })(req, res, next);
+});
 
-// app.post("/login", function (req, res, next) {
-//   passport.authenticate("local", function (err, user, info) {
-//     if (err) {
-//       return next(err);
-//     }
-//     req.logIn(user, function (err) {
-//       if (err) {
-//         const loginError = new Error("Error logging in");
-//         loginError.status = 401;
-//         return next(loginError);
-//       }
-//       const authenticationReturnObject = getAuthenticationReturnObject({
-//         isAuthenticated: true,
-//         user,
-//       });
-//       return res.send(authenticationReturnObject);
-//     });
-//   })(req, res, next);
-// });
+app.get("/logout", (req, res) => {
+  req.logout();
+  res.send({ isAuthenticated: req.isAuthenticated() });
+});
 
-// app.get("/logout", (req, res) => {
-//   req.logout();
-//   res.send({ isAuthenticated: req.isAuthenticated() });
-// });
+function requireAuthentication(req, res, next) {
+  if (req.isAuthenticated()) {
+    next();
+  } else {
+    res.send("Please log in");
+  }
+}
 
-// function requireAuthentication(req, res, next) {
-//   if (req.isAuthenticated()) {
-//     next();
-//   } else {
-//     res.send("Please log in");
-//   }
-// }
-
-// const apiRouter = require("./routes/router");
-// app.use("/api", requireAuthentication, apiRouter);
+app.use("/", requireAuthentication, routes);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

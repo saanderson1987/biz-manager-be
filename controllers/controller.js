@@ -26,7 +26,7 @@ module.exports = class Controller {
     console.log(req.body);
     const record = req.body;
     this.model
-      .create(record)
+      .createAndGet(record, req.query.attributes)
       .then((data) => res.send(data))
       .catch((err) => next(err));
   }
@@ -35,11 +35,8 @@ module.exports = class Controller {
     console.log(req.body);
     const record = req.body;
     this.model
-      .update(record, {
-        where: { id: req.params.id },
-        returning: true,
-      })
-      .then((data) => res.send(this.model.formatUpdate(data)))
+      .updateAndGet(req.params.id, record, req.query.attributes)
+      .then((data) => res.send(data))
       .catch((err) => next(err));
   }
 

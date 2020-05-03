@@ -32,6 +32,49 @@ const modelExtensionMethods = {
     );
   },
 
+  createAndGet: function (record, returnAttributes) {
+    return this.create(record).then((data) => {
+      return this.getRecordWithReturnAttributes(data, returnAttributes);
+    });
+  },
+
+  updateAndGet: function (id, record, returnAttributes) {
+    return this.update(record, {
+      where: { id },
+      returning: true,
+    }).then((data) => {
+      const updatedRecord = this.parseUpdate(data);
+      return this.getRecordWithReturnAttributes(
+        updatedRecord,
+        returnAttributes
+      );
+    });
+  },
+
+  getRecordWithReturnAttributes(record, returnAttributes) {
+    if (record.id && returnAttributes) {
+      const returnAttributesArr = returnAttributes.split(",");
+
+      // if attribute possibly has attribute from join table
+      if (returnAttributesArr.some((attr) => !this.tableAttributes[attr])) {
+        return this.getOne(record.id, { attributes: returnAttributes });
+      }
+
+      // "returning" option on sequelize Model methods does not work, so filter for returnAttributes
+      returnAttributesArr.push("id");
+      return Object.entries(record.get({ plain: true })).reduce(
+        (acc, [attr, value]) => {
+          if (returnAttributesArr.includes(attr)) {
+            acc[attr] = value;
+          }
+          return acc;
+        },
+        {}
+      );
+    }
+    return new Promise((resolve) => resolve(record));
+  },
+
   createAttributesAndIncludeOptions: function (attributesString) {
     const result = {};
     if (attributesString) {
@@ -98,10 +141,6 @@ const modelExtensionMethods = {
     if (include) {
       return Object.keys(record.get({ plain: true })).reduce(
         (acc, attribute) => {
-          if (attribute === "author") {
-            console.log(attribute);
-            console.log(record[attribute]);
-          }
           if (this[`formatAttr_${attribute}`]) {
             acc = this[`formatAttr_${attribute}`](acc, record[attribute]);
           } else if (record[attribute] instanceof Array) {
@@ -142,7 +181,7 @@ const modelExtensionMethods = {
     return data;
   },
 
-  formatUpdate(data) {
+  parseUpdate(data) {
     if (data instanceof Array && data[1] && data[1][0]) {
       return data[1][0];
     }

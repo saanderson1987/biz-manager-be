@@ -1,4 +1,6 @@
 "use strict";
+const { Model } = require("sequelize");
+
 module.exports = (sequelize, DataTypes) => {
   const VendorOrder = sequelize.define(
     "VendorOrder",
@@ -27,5 +29,26 @@ module.exports = (sequelize, DataTypes) => {
       as: "vendorOrderReplacements",
     });
   };
+
+  VendorOrder.createAttributesAndIncludeOptions = function (attributesString) {
+    if (
+      attributesString &&
+      attributesString.includes("doesVendorOrderHaveReplacements")
+    ) {
+      return Model.createAttributesAndIncludeOptions.call(
+        this,
+        attributesString.replace(
+          "doesVendorOrderHaveReplacements",
+          "vendorOrderReplacements_id"
+        )
+      );
+    }
+    return Model.createAttributesAndIncludeOptions.call(this, attributesString);
+  };
+
+  VendorOrder.formatAttr_vendorOrderReplacements = function (data) {
+    return data && data.length > 0;
+  };
+
   return VendorOrder;
 };

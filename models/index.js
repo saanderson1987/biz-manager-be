@@ -5,7 +5,10 @@ const path = require("path");
 const { loadPGEnumFix } = require("../utils");
 
 loadPGEnumFix(); // Fixes a bug with enum data types while syncing the database.
-const Sequelize = require("sequelize");
+const { Sequelize, Model } = require("sequelize");
+const extendBaseModel = require("./extend-base-model");
+
+extendBaseModel(Model);
 
 if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
@@ -31,7 +34,10 @@ if (config.url) {
 fs.readdirSync(__dirname)
   .filter((file) => {
     return (
-      file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".js"
+      file.indexOf(".") !== 0 &&
+      file !== basename &&
+      file !== "extend-base-model.js" &&
+      file.slice(-3) === ".js"
     );
   })
   .forEach((file) => {

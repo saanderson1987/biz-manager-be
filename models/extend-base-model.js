@@ -1,64 +1,45 @@
-module.exports = class Controller {
-  constructor(model) {
-    this.model = model;
-    this.index = this.index.bind(this);
-    this.getById = this.getById.bind(this);
-    this.create = this.create.bind(this);
-    this.update = this.update.bind(this);
-    this.delete = this.delete.bind(this);
-  }
+const { Model } = require("sequelize");
 
-  index(req, res, next) {
-    this.model
-      .getAll(req.query)
-      .then((data) => res.send(data))
-      .catch((err) => next(err));
-  }
+const modelExtensionMethods = {
+  getAll: function (query) {
+    const attributesString = query.attributes;
+    const { attributes, include } = this.createAttributesAndIncludeOptions(
+      attributesString
+    );
+    const where = this.createWhereOption(query);
+    return this.findAll({ attributes, where, include }).then(
+      (data) =>
+        new Promise((resolve) =>
+          resolve(this.formatFindAll(data, attributesString, include))
+        )
+    );
+  },
 
-  getById(req, res, next) {
-    this.model
-      .getOne(req.params.id, req.query)
-      .then((data) => res.send(data))
-      .catch((err) => next(err));
-  }
+  getOne: function (id, query) {
+    const attributesString = query.attributes;
+    const { attributes, include } = this.createAttributesAndIncludeOptions(
+      attributesString
+    );
+    return this.findOne({
+      attributes,
+      include,
+      where: { id },
+    }).then(
+      (data) =>
+        new Promise((resolve) =>
+          resolve(this.formatRecord(data, attributesString, include))
+        )
+    );
+  },
 
-  create(req, res, next) {
-    console.log(req.body);
-    const record = req.body;
-    this.model
-      .create(record)
-      .then((data) => res.send(data))
-      .catch((err) => next(err));
-  }
-
-  update(req, res, next) {
-    console.log(req.body);
-    const record = req.body;
-    this.model
-      .update(record, {
-        where: { id: req.params.id },
-        returning: true,
-      })
-      .then((data) => res.send(this.model.formatUpdate(data)))
-      .catch((err) => next(err));
-  }
-
-  delete(req, res, next) {
-    const id = req.params.id;
-    this.model
-      .destroy({ where: { id } })
-      .then((data) => res.send(this.model.formatDelete(data, id)))
-      .catch((err) => next(err));
-  }
-
-  createAttributesAndIncludeOptions(attributesString) {
+  createAttributesAndIncludeOptions: function (attributesString) {
     const result = {};
     if (attributesString) {
       const { attributes, includeByAssociationTable } = attributesString
         .split(",")
         .reduce(
           (acc, attribute) => {
-            if (this.model.tableAttributes[attribute]) {
+            if (this.tableAttributes[attribute]) {
               acc.attributes.push(attribute);
               return acc;
             }
@@ -70,14 +51,14 @@ module.exports = class Controller {
             if (
               associationTable &&
               associationTableAttribute &&
-              this.model.associations[associationTable] &&
-              this.model.associations[associationTable].target.tableAttributes[
+              this.associations[associationTable] &&
+              this.associations[associationTable].target.tableAttributes[
                 associationTableAttribute
               ]
             ) {
               if (!acc.includeByAssociationTable[associationTable]) {
                 acc.includeByAssociationTable[associationTable] = {
-                  model: this.model.associations[associationTable].target,
+                  model: this.associations[associationTable].target,
                   as: associationTable,
                   attributes: [],
                 };
@@ -105,13 +86,24 @@ module.exports = class Controller {
       }
     }
     return result;
-  }
+  },
 
-  formatRecord(record, attributesString, include) {
+  createWhereOption: function (queryParams) {
+    const where = { ...queryParams };
+    delete where.attributes;
+    return where;
+  },
+
+  formatRecord: function (record, attributesString, include) {
     if (include) {
       return Object.keys(record.get({ plain: true })).reduce(
         (acc, attribute) => {
-          if (
+          if (this[`formatAttr_${attribute}`]) {
+            acc[attribute] = this[`formatAttr_${attribute}`](record[attribute]);
+          } else if (record[attribute] instanceof Array) {
+            if (attributesString)
+              acc[attribute] = this.formatRecord(record[attribute]);
+          } else if (
             Object.getPrototypeOf(record[attribute].constructor).name ===
             "Model"
           ) {
@@ -131,15 +123,9 @@ module.exports = class Controller {
       );
     }
     return record;
-  }
+  },
 
-  createWhereOption(queryParams) {
-    const where = { ...queryParams };
-    delete where.attributes;
-    return where;
-  }
-
-  formatFindAll(data, attributesString, include) {
+  formatFindAll: function (data, attributesString, include) {
     if (data instanceof Array) {
       return data.reduce((acc, record) => {
         if (record.id) {
@@ -149,14 +135,14 @@ module.exports = class Controller {
       }, {});
     }
     return data;
-  }
+  },
 
   formatUpdate(data) {
     if (data instanceof Array && data[1] && data[1][0]) {
       return data[1][0];
     }
     return data;
-  }
+  },
 
   formatDelete(data, id) {
     if (data === 1) {
@@ -165,5 +151,11 @@ module.exports = class Controller {
     throw new Error(
       `Error deleting record with id ${id}: DB response / number of rows deleted: ${data}`
     );
+  },
+};
+
+module.exports = function extendBaseModel() {
+  for (const methodName in modelExtensionMethods) {
+    Model[methodName] = modelExtensionMethods[methodName];
   }
 };

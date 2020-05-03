@@ -1,5 +1,6 @@
 const express = require("express");
 const createStandardRouter = require("./create-crud-router");
+const authenticationRouter = require("./authentication-router");
 const {
   companyController,
   installationController,
@@ -14,6 +15,16 @@ const {
 } = require("../controllers");
 
 const router = express.Router();
+
+router.use(authenticationRouter);
+
+router.use(function requireAuthentication(req, res, next) {
+  if (req.isAuthenticated()) {
+    next();
+  } else {
+    res.send("Please log in");
+  }
+});
 
 router.use("/companies", createStandardRouter(companyController));
 router.use("/installations", createStandardRouter(installationController));

@@ -98,14 +98,19 @@ const modelExtensionMethods = {
     if (include) {
       return Object.keys(record.get({ plain: true })).reduce(
         (acc, attribute) => {
+          if (attribute === "author") {
+            console.log(attribute);
+            console.log(record[attribute]);
+          }
           if (this[`formatAttr_${attribute}`]) {
             acc = this[`formatAttr_${attribute}`](acc, record[attribute]);
           } else if (record[attribute] instanceof Array) {
             if (attributesString)
               acc[attribute] = this.formatRecord(record[attribute]);
           } else if (
+            record[attribute] &&
             Object.getPrototypeOf(record[attribute].constructor).name ===
-            "Model"
+              "Model"
           ) {
             for (const subAttr in record[attribute].get({ plain: true })) {
               const joinTableAttribute = `${attribute}_${subAttr}`;

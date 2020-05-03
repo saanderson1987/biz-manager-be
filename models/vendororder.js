@@ -31,14 +31,11 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   VendorOrder.createAttributesAndIncludeOptions = function (attributesString) {
-    if (
-      attributesString &&
-      attributesString.includes("doesVendorOrderHaveReplacements")
-    ) {
+    if (attributesString && attributesString.includes("doesHaveReplacements")) {
       return Model.createAttributesAndIncludeOptions.call(
         this,
         attributesString.replace(
-          "doesVendorOrderHaveReplacements",
+          "doesHaveReplacements",
           "vendorOrderReplacements_id"
         )
       );
@@ -46,8 +43,12 @@ module.exports = (sequelize, DataTypes) => {
     return Model.createAttributesAndIncludeOptions.call(this, attributesString);
   };
 
-  VendorOrder.formatAttr_vendorOrderReplacements = function (data) {
-    return data && data.length > 0;
+  VendorOrder.formatAttr_vendorOrderReplacements = function (
+    formattedRecord,
+    attrValue
+  ) {
+    formattedRecord.doesHaveReplacements = attrValue && attrValue.length > 0;
+    return formattedRecord;
   };
 
   return VendorOrder;

@@ -99,7 +99,7 @@ const modelExtensionMethods = {
       return Object.keys(record.get({ plain: true })).reduce(
         (acc, attribute) => {
           if (this[`formatAttr_${attribute}`]) {
-            acc[attribute] = this[`formatAttr_${attribute}`](record[attribute]);
+            acc = this[`formatAttr_${attribute}`](acc, record[attribute]);
           } else if (record[attribute] instanceof Array) {
             if (attributesString)
               acc[attribute] = this.formatRecord(record[attribute]);

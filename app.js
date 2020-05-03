@@ -29,7 +29,6 @@ app.use(function (req, res, next) {
     "Access-Control-Allow-Methods",
     "GET, PUT, POST, GET, DELETE, OPTIONS"
   );
-
   next();
 });
 

@@ -22,12 +22,6 @@ module.exports = (sequelize, DataTypes) => {
     record.password = hash;
     return Model.create.call(this, record);
   };
-  // const test = {
-  //   username: "test2",
-  //   password: "test2",
-  // };
-
-  // User.create(test).then((user) => console.log(user));
 
   return User;
 };

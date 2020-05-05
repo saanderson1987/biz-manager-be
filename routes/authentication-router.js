@@ -43,7 +43,11 @@ router.post("/login", function (req, res, next) {
 
 router.get("/logout", (req, res) => {
   req.logout();
-  res.send({ isAuthenticated: req.isAuthenticated() });
+  const authenticationReturnObject = getAuthenticationReturnObject({
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user,
+  });
+  res.send(authenticationReturnObject);
 });
 
 module.exports = router;

@@ -112,7 +112,7 @@ const modelExtensionMethods = {
               return acc;
             }
 
-            throw new Error(`Attribute ${attribute} does not exist`);
+            throw new Error(`Attribute "${attribute}" does not exist`);
           },
           { attributes: [], includeByAssociationTable: {} }
         );

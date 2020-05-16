@@ -1,4 +1,4 @@
-const { Model } = require("sequelize");
+const { Model, Op } = require("sequelize");
 
 const modelExtensionMethods = {
   getAll: function (query) {
@@ -134,7 +134,15 @@ const modelExtensionMethods = {
   createWhereOption: function (queryParams) {
     const where = { ...queryParams };
     delete where.attributes;
-    return where;
+    return Object.entries(where).reduce((acc, [key, val]) => {
+      valSplitByComma = val.split(",");
+      if (valSplitByComma.length > 1) {
+        acc[key] = { [Op.or]: valSplitByComma };
+      } else {
+        acc[key] = val;
+      }
+      return acc;
+    }, {});
   },
 
   formatRecord: function (record, attributesString, include) {
